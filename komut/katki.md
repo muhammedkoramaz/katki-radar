@@ -63,7 +63,7 @@ Kısa, kibar bir İngilizce yorum taslağı hazırla (ör. "Hi! I'd like to work
 2. Hitap: mevcut Türkçe dosya varsa tonunu izle; yoksa "siz".
 3. Türkçe dosyayı oluştur/tamamla: anahtar sırası ve yapısı kaynakla aynı; yer tutucular, HTML etiketleri ve ICU yapıları birebir korunur.
 4. Her dosya için: `node C:/Users/muham/katki/katki-radar/scripts/lib/ceviri-kontrol.mjs <en-dosyası> <tr-dosyası>` (gettext `.po` için kaynak yerine `-`). Çıkış kodu 0 olana kadar düzelt.
-5. ✋ Çeviriyi 30–50 satırlık parçalar halinde `| Anahtar | İngilizce | Türkçe |` tablosuyla göster; her parça için onay/düzeltme al. Kullanıcının düzelttiği terimleri `tr-sozluk.md`'ye ekle; sözlük değişikliğini katki-radar reposunda ayrıca commit + push et (`git -C C:/Users/muham/katki/katki-radar ...`).
+5. ✋ Çeviriyi 30–50 satırlık parçalar halinde `| Anahtar | İngilizce | Türkçe |` tablosuyla göster; her parça için onay/düzeltme al. Kullanıcının düzelttiği terimleri `tr-sozluk.md`'ye ekle; sözlük değişikliğini commit'lemeden önce `git -C C:/Users/muham/katki/katki-radar pull --rebase` çalıştır, sonra katki-radar reposunda ayrıca commit + push et (`git -C C:/Users/muham/katki/katki-radar ...`).
 6. Proje dilleri bir yerde listeliyorsa (dil seçici, i18n config, `languages.ts`, `LINGUAS` vb.) Türkçeyi ekle.
 
 ## 5b. Kod / doküman çalışması
