@@ -1,0 +1,36 @@
+name: Haftalık tarama
+
+on:
+  schedule:
+    - cron: "0 6 * * 1" # Pazartesi 06:00 UTC = 09:00 TSİ
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: tara
+  cancel-in-progress: false
+
+jobs:
+  tara:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Testler
+        run: node --test
+      - name: Tarama
+        run: node scripts/tara.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: gorulen.json kaydet
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/gorulen.json
+          git diff --cached --quiet || (git commit -m "chore: görülen fırsatları güncelle" && git push)
