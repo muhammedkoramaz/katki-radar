@@ -1,0 +1,14 @@
+{
+  "kullanici": "muhammedkoramaz",
+  "konular": ["accessibility", "a11y", "education", "edtech", "health", "humanitarian",
+              "disaster-response", "privacy", "self-hosted", "digital-public-goods"],
+  "diller": ["JavaScript", "TypeScript", "Python"],
+  "yildiz": { "min": 100, "max": 30000, "idealMin": 500, "idealMax": 10000 },
+  "sonPushGun": 90,
+  "maksRepo": 80,
+  "kodEtiketleri": ["good first issue", "help wanted"],
+  "dokumanEtiketleri": ["documentation", "docs"],
+  "haftalikKota": { "ceviri": 4, "kod": 4, "dokuman": 2 },
+  "ceviriEksikEsik": 0.7,
+  "minDigerDil": 3
+}
