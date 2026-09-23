@@ -16,8 +16,9 @@ export function createClient({
   sleep = defaultSleep,
   log = (m) => console.error(m),
   searchIntervalMs = 3000,
+  now = () => Date.now(),
 } = {}) {
-  const stats = { requests: 0 };
+  const stats = { requests: 0, remaining: Infinity };
   let lastSearch = 0;
 
   async function request(path, { method = 'GET', body, raw = false } = {}) {
@@ -36,17 +37,32 @@ export function createClient({
       stats.requests++;
       let res;
       try {
-        res = await fetchImpl(url, init);
+        res = await fetchImpl(url, { ...init, signal: AbortSignal.timeout(30000) });
       } catch (err) {
         if (!canRetry) throw err;
         log(`ağ hatası (${err.message}), tekrar denenecek: ${method} ${url}`);
         await sleep(RETRY_DELAYS[attempt]);
         continue;
       }
+      const remainingHeader = res.headers.get('x-ratelimit-remaining');
+      if (!path.startsWith('/search/') && remainingHeader !== null) {
+        stats.remaining = Number(remainingHeader);
+      }
       if (res.status === 404) return null;
+      if ((res.status === 403 || res.status === 429) && remainingHeader === '0') {
+        const reset = Number(res.headers.get('x-ratelimit-reset'));
+        const wait = reset * 1000 - now() + 1000;
+        if (canRetry && wait > 0 && wait <= 300000) {
+          log(`birincil hız sınırı, tekrar denenecek: ${method} ${url}`);
+          await sleep(wait);
+          continue;
+        }
+        const text = await res.text();
+        throw new GitHubError(res.status, `${method} ${url} → ${res.status}: ${text.slice(0, 200)}`);
+      }
       const retryAfter = Number(res.headers.get('retry-after'));
       let limited = res.status === 429
-        || (res.status === 403 && (retryAfter > 0 || res.headers.get('x-ratelimit-remaining') === '0'));
+        || (res.status === 403 && retryAfter > 0);
       let secondaryLimit = false;
       let bodyText;
       if (!limited && res.status === 403) {

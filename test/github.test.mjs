@@ -5,7 +5,7 @@ import { createClient } from '../scripts/lib/github.mjs';
 const json = (body, status = 200, headers = {}) =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', ...headers } });
 
-function setup(responses) {
+function setup(responses, { now } = {}) {
   const sleeps = [];
   const calls = [];
   const fetchImpl = async (url, init) => {
@@ -16,6 +16,7 @@ function setup(responses) {
   };
   const client = createClient({
     token: 't', fetchImpl, sleep: async (ms) => { sleeps.push(ms); }, log: () => {}, searchIntervalMs: 0,
+    ...(now ? { now } : {}),
   });
   return { client, sleeps, calls };
 }
@@ -105,4 +106,32 @@ test('search sort parametresini ekler', async () => {
   const { client, calls } = setup([json({ items: [] })]);
   await client.search('repositories', 'x', { sort: 'updated' });
   assert.equal(calls[0].url, 'https://api.github.com/search/repositories?q=x&per_page=10&sort=updated&order=desc');
+});
+
+test('birincil hız sınırı: reset yakınsa bekleyip tekrar dener', async () => {
+  const fixedNow = 1_700_000_000_000;
+  const resetSeconds = fixedNow / 1000 + 120; // 2 dakika ileride
+  const { client, sleeps } = setup([
+    new Response('', { status: 403, headers: { 'x-ratelimit-remaining': '0', 'x-ratelimit-reset': String(resetSeconds) } }),
+    json({ ok: 1 }),
+  ], { now: () => fixedNow });
+  assert.deepEqual(await client.request('/x'), { ok: 1 });
+  assert.deepEqual(sleeps, [121000]);
+});
+
+test('birincil hız sınırı: reset çok uzaksa hemen fırlatır', async () => {
+  const fixedNow = 1_700_000_000_000;
+  const resetSeconds = fixedNow / 1000 + 1800; // 30 dakika ileride
+  const { client, sleeps } = setup([
+    new Response('', { status: 403, headers: { 'x-ratelimit-remaining': '0', 'x-ratelimit-reset': String(resetSeconds) } }),
+  ], { now: () => fixedNow });
+  await assert.rejects(client.request('/x'), (err) => err.status === 403);
+  assert.deepEqual(sleeps, []);
+});
+
+test('stats.remaining normal yanıtın başlığından güncellenir', async () => {
+  const { client } = setup([json({ ok: 1 }, 200, { 'x-ratelimit-remaining': '42' })]);
+  assert.equal(client.stats.remaining, Infinity);
+  await client.request('/x');
+  assert.equal(client.stats.remaining, 42);
 });

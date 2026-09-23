@@ -55,6 +55,9 @@ export async function run({
   };
 
   const { repos, failures } = await discoverRepos({ client, config, now });
+  if (repos.length === 0 && failures.length > 0) {
+    throw new Error('Keşif başarısız: ' + failures.join('; '));
+  }
   stats['Taranan repo'] = repos.length;
 
   let openPr = new Set();
@@ -67,6 +70,10 @@ export async function run({
   const eligible = [];
   const opps = [];
   for (const repo of repos) {
+    if (client.stats.remaining !== undefined && client.stats.remaining < 60) {
+      failures.push('API bütçesi azaldı, kalan repolar atlandı');
+      break;
+    }
     if (openPr.has(repo.fullName.toLowerCase())) { stats['Açık PR nedeniyle atlanan']++; continue; }
     try {
       const { text, readme } = await fetchPolicyTexts(client, repo.fullName);

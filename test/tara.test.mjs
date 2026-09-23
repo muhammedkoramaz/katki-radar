@@ -62,6 +62,59 @@ test('run (dry-run) çeviri + kod fırsatlarını bulur, yasaklı repoyu eler', 
   await assert.rejects(readFile(join(dir, 'gorulen.json'), 'utf8'));
 });
 
+test('run politika isteği hata verirse o repoyu eler ve başarısızlar listesine ekler', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'katki-'));
+  const client = fakeClient();
+  const baseRequest = client.request;
+  client.request = async (p, opts) => {
+    if (p === '/repos/o/r/contents/CONTRIBUTING.md') throw new Error('kapalı');
+    return baseRequest(p, opts);
+  };
+  const { selected, body } = await run({
+    client, config, now: new Date('2026-09-23T00:00:00Z'), dryRun: true,
+    seenPath: join(dir, 'gorulen.json'), log: () => {}, out: () => {},
+  });
+  assert.equal(selected.some((o) => o.repo.fullName === 'o/r'), false);
+  const failuresSection = body.slice(body.indexOf('Başarısız sorgular'));
+  assert.match(failuresSection, /o\/r/);
+});
+
+test('run keşif tamamen başarısız olursa yayınlamadan önce fırlatır', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'katki-'));
+  const seenPath = join(dir, 'gorulen.json');
+  const calls = [];
+  const client = {
+    calls,
+    stats: { requests: 0 },
+    search: async (kind) => {
+      if (kind === 'repositories') throw new Error('boom');
+      return [];
+    },
+    request: async (p, opts = {}) => { calls.push([opts.method ?? 'GET', p]); return null; },
+  };
+  await assert.rejects(
+    run({
+      client, config, now: new Date('2026-09-23T00:00:00Z'), dryRun: false, selfRepo: 'me/katki-radar',
+      seenPath, log: () => {}, out: () => {},
+    }),
+    /Keşif başarısız/,
+  );
+  assert.equal(calls.some(([m]) => m === 'POST' || m === 'PATCH'), false);
+  await assert.rejects(readFile(seenPath, 'utf8'));
+});
+
+test('run API bütçesi azaldığında kalan repoları atlar', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'katki-'));
+  const client = fakeClient();
+  client.stats.remaining = 10;
+  const { body } = await run({
+    client, config, now: new Date('2026-09-23T00:00:00Z'), dryRun: true,
+    seenPath: join(dir, 'gorulen.json'), log: () => {}, out: () => {},
+  });
+  assert.equal(client.calls.length, 0);
+  assert.match(body, /API bütçesi azaldı, kalan repolar atlandı/);
+});
+
 test('run açık PRı olan repoyu atlar', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'katki-'));
   const openPrs = [{ repository_url: 'https://api.github.com/repos/O/R' }];
