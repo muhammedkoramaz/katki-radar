@@ -13,7 +13,7 @@ export function detectFormat(path) {
 export function parseSimpleYaml(text) {
   const root = {};
   const stack = [{ indent: -1, obj: root }];
-  text.replace(/^﻿/, '').split(/\r?\n/).forEach((raw, i) => {
+  text.replace(/^\uFEFF/, '').split(/\r?\n/).forEach((raw, i) => {
     const line = stripComment(raw).replace(/\s+$/, '');
     if (!line.trim() || line.trim() === '---') return;
     const indent = line.match(/^ */)[0].length;
@@ -82,7 +82,7 @@ export function leafEntries(obj, prefix = '', out = new Map()) {
 }
 
 export function readEntries(format, text) {
-  const clean = text.replace(/^﻿/, '');
+  const clean = text.replace(/^\uFEFF/, '');
   if (format === 'json') return leafEntries(JSON.parse(clean));
   if (format === 'yaml') return leafEntries(stripLangRoot(parseSimpleYaml(clean)));
   throw new Error(`desteklenmeyen format: ${format}`);
@@ -103,7 +103,7 @@ export function parsePo(text) {
     try { return JSON.parse(str); } catch { throw new Error(`PO satır ${i + 1}: geçersiz metin`); }
   };
 
-  text.replace(/^﻿/, '').split(/\r?\n/).forEach((raw, i) => {
+  text.replace(/^\uFEFF/, '').split(/\r?\n/).forEach((raw, i) => {
     const line = raw.trim();
     if (!line || line.startsWith('#')) return;
     const m = line.match(/^(msgctxt|msgid_plural|msgid|msgstr)(?:\[(\d+)\])?\s+(".*")$/);

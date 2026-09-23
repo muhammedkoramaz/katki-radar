@@ -19,7 +19,7 @@ export function isClaimed(comments, now, days = 30) {
   const since = now.getTime() - days * DAY;
   return comments.some((c) => {
     if (new Date(c.created_at).getTime() < since) return false;
-    const body = (c.body ?? '').toLowerCase().replace(/[‘’]/g, "'");
+    const body = (c.body ?? '').toLowerCase().replace(/[\u2018\u2019]/g, "'");
     return CLAIM_PATTERNS.some((p) => body.includes(p));
   });
 }

@@ -15,7 +15,7 @@ test('buildIssueQueries 5li gruplar ve etiket OR sorgusu üretir', () => {
 });
 
 test('isClaimed son 30 gündeki sahiplenme yorumunu yakalar', () => {
-  assert.equal(isClaimed([{ created_at: '2026-09-10T00:00:00Z', body: 'Hi, I’d like to work on this!' }], now), true);
+  assert.equal(isClaimed([{ created_at: '2026-09-10T00:00:00Z', body: 'Hi, I\u2019d like to work on this!' }], now), true);
   assert.equal(isClaimed([{ created_at: '2026-07-01T00:00:00Z', body: 'can I work on this?' }], now), false);
   assert.equal(isClaimed([{ created_at: '2026-09-10T00:00:00Z', body: 'Same bug here' }], now), false);
 });

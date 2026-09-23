@@ -11,7 +11,7 @@ const DISCLOSE_TERMS = [/\bdisclos(?:e|ure)\b/, /\bmust mention\b/, /\bindicate\
 const POLICY_PATHS = ['contents/CONTRIBUTING.md', 'contents/.github/CONTRIBUTING.md', 'contents/AI_POLICY.md', 'readme'];
 
 export function splitSentences(text) {
-  return text.toLowerCase().replace(/[‘’]/g, "'").split(/[.!?](?:\s|$)|\n\s*\n/).map((s) => s.trim()).filter(Boolean);
+  return text.toLowerCase().replace(/[\u2018\u2019]/g, "'").split(/[.!?](?:\s|$)|\n\s*\n/).map((s) => s.trim()).filter(Boolean);
 }
 
 export function classifyAiPolicy(text) {
@@ -27,7 +27,7 @@ export function classifyAiPolicy(text) {
 export async function fetchPolicyTexts(client, fullName) {
   const parts = [];
   for (const p of POLICY_PATHS) {
-    const part = await client.request(`/repos/${fullName}/${p}`, { raw: true }).catch(() => null);
+    const part = await client.request(`/repos/${fullName}/${p}`, { raw: true });
     parts.push(part);
   }
   return { text: parts.filter(Boolean).join('\n\n'), readme: parts.at(-1) ?? '' };
