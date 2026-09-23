@@ -1,0 +1,11 @@
+{
+  "name": "katki-radar",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "test": "node --test",
+    "tara": "node scripts/tara.mjs",
+    "tara:dry": "node scripts/tara.mjs --dry-run"
+  }
+}
