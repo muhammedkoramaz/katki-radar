@@ -1,0 +1,43 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { classifyAiPolicy, fetchPolicyTexts } from '../scripts/lib/politika.mjs';
+
+test('yasak cümlesi YASAK döndürür', () => {
+  assert.equal(classifyAiPolicy('# Contributing\n\nWe do not accept AI-generated pull requests. Thanks!'), 'YASAK');
+  assert.equal(classifyAiPolicy('PRs created with LLMs will be closed.'), 'YASAK');
+  assert.equal(classifyAiPolicy('Use of generative AI is prohibited in this project'), 'YASAK');
+});
+
+test('açıklama şartı ACIKLAMA döndürür', () => {
+  assert.equal(classifyAiPolicy('If you used AI tools, please disclose it in the PR.'), 'ACIKLAMA');
+});
+
+test('yasak açıklamadan önceliklidir', () => {
+  assert.equal(classifyAiPolicy('Disclose AI tools usage. AI-generated code will be rejected.'), 'YASAK');
+});
+
+test('ilgisiz metin YOK döndürür', () => {
+  assert.equal(classifyAiPolicy('We ban nothing. Please add tests. See the banner component.'), 'YOK');
+  assert.equal(classifyAiPolicy(''), 'YOK');
+});
+
+test('farklı cümlelerdeki terimler birleşmez', () => {
+  assert.equal(classifyAiPolicy('Copilot users are welcome. Spam will be closed.'), 'YOK');
+});
+
+test('fetchPolicyTexts dosyaları birleştirir, README ayrıca döner', async () => {
+  const files = {
+    '/repos/o/r/contents/CONTRIBUTING.md': 'C',
+    '/repos/o/r/contents/AI_POLICY.md': 'A',
+    '/repos/o/r/readme': 'R',
+  };
+  const seen = [];
+  const client = { request: async (p, opts) => { seen.push(opts?.raw); return files[p] ?? null; } };
+  assert.deepEqual(await fetchPolicyTexts(client, 'o/r'), { text: 'C\n\nA\n\nR', readme: 'R' });
+  assert.ok(seen.every((raw) => raw === true));
+});
+
+test('fetchPolicyTexts hataları yutar', async () => {
+  const client = { request: async () => { throw new Error('x'); } };
+  assert.deepEqual(await fetchPolicyTexts(client, 'o/r'), { text: '', readme: '' });
+});
