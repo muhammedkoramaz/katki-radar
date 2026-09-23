@@ -45,6 +45,22 @@ test('fetchPolicyTexts dosyaları birleştirir, README ayrıca döner', async ()
   assert.ok(seen.every((raw) => raw === true));
 });
 
+test('fetchPolicyTexts istekleri sırayla yapar', async () => {
+  let inFlight = 0;
+  let maxInFlight = 0;
+  const client = {
+    request: async () => {
+      inFlight++;
+      maxInFlight = Math.max(maxInFlight, inFlight);
+      await new Promise((resolve) => setImmediate(resolve));
+      inFlight--;
+      return null;
+    },
+  };
+  await fetchPolicyTexts(client, 'o/r');
+  assert.equal(maxInFlight, 1);
+});
+
 test('fetchPolicyTexts hataları yutar', async () => {
   const client = { request: async () => { throw new Error('x'); } };
   assert.deepEqual(await fetchPolicyTexts(client, 'o/r'), { text: '', readme: '' });

@@ -1,5 +1,6 @@
 const API = 'https://api.github.com';
 const RETRY_DELAYS = [2000, 4000, 8000];
+const SECONDARY_WAIT_MS = 60000;
 const defaultSleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export class GitHubError extends Error {
@@ -14,7 +15,7 @@ export function createClient({
   fetchImpl = globalThis.fetch,
   sleep = defaultSleep,
   log = (m) => console.error(m),
-  searchIntervalMs = 2100,
+  searchIntervalMs = 3000,
 } = {}) {
   const stats = { requests: 0 };
   let lastSearch = 0;
@@ -44,15 +45,27 @@ export function createClient({
       }
       if (res.status === 404) return null;
       const retryAfter = Number(res.headers.get('retry-after'));
-      const limited = res.status === 429
+      let limited = res.status === 429
         || (res.status === 403 && (retryAfter > 0 || res.headers.get('x-ratelimit-remaining') === '0'));
+      let secondaryLimit = false;
+      let bodyText;
+      if (!limited && res.status === 403) {
+        // GitHub's secondary rate limit often omits retry-after and x-ratelimit-remaining;
+        // it only shows up in the body, so we have to read it to detect it.
+        bodyText = await res.text();
+        if (/secondary rate limit/i.test(bodyText)) {
+          limited = true;
+          secondaryLimit = true;
+        }
+      }
       if ((res.status >= 500 || limited) && canRetry) {
         log(`${res.status}, tekrar denenecek: ${method} ${url}`);
-        await sleep(retryAfter > 0 ? retryAfter * 1000 : RETRY_DELAYS[attempt]);
+        const wait = retryAfter > 0 ? retryAfter * 1000 : (secondaryLimit ? SECONDARY_WAIT_MS : RETRY_DELAYS[attempt]);
+        await sleep(wait);
         continue;
       }
       if (!res.ok) {
-        const text = await res.text();
+        const text = bodyText !== undefined ? bodyText : await res.text();
         throw new GitHubError(res.status, `${method} ${url} → ${res.status}: ${text.slice(0, 200)}`);
       }
       if (res.status === 204) return null;

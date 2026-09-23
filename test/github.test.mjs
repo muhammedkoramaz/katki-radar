@@ -60,6 +60,23 @@ test('sürekli hata 3 tekrardan sonra fırlatır', async () => {
   assert.deepEqual(sleeps, [2000, 4000, 8000]);
 });
 
+test('403 secondary rate limit gövdesinde 60 sn bekleyip tekrar dener', async () => {
+  const { client, sleeps } = setup([
+    new Response('{"message":"You have exceeded a secondary rate limit."}', { status: 403 }),
+    json({}),
+  ]);
+  await client.request('/x');
+  assert.deepEqual(sleeps, [60000]);
+});
+
+test('403 izin hatası tekrar denenmez', async () => {
+  const { client, sleeps } = setup([
+    new Response('{"message":"Resource not accessible"}', { status: 403 }),
+  ]);
+  await assert.rejects(client.request('/x'), (err) => err.status === 403);
+  assert.deepEqual(sleeps, []);
+});
+
 test('422 gibi istemci hataları tekrar denenmeden fırlatılır', async () => {
   const { client, sleeps } = setup([new Response('invalid', { status: 422 })]);
   await assert.rejects(client.request('/x'), (err) => err.status === 422);

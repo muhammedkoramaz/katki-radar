@@ -25,7 +25,10 @@ export function classifyAiPolicy(text) {
 }
 
 export async function fetchPolicyTexts(client, fullName) {
-  const parts = await Promise.all(POLICY_PATHS.map((p) =>
-    client.request(`/repos/${fullName}/${p}`, { raw: true }).catch(() => null)));
+  const parts = [];
+  for (const p of POLICY_PATHS) {
+    const part = await client.request(`/repos/${fullName}/${p}`, { raw: true }).catch(() => null);
+    parts.push(part);
+  }
   return { text: parts.filter(Boolean).join('\n\n'), readme: parts.at(-1) ?? '' };
 }
