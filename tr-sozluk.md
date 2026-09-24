@@ -49,3 +49,14 @@
 | Accessibility | Erişilebilirlik | |
 | Privacy | Gizlilik | |
 | Are you sure? | Emin misiniz? | |
+| Tutor (AI tutor) | Eğitmen | "Yapay zekâ eğitmeni" (freelingo) |
+| Flashcards | Bilgi Kartları | |
+| Streak | Seri | Günlük çalışma serisi |
+| Assessment (placement) | Seviye Tespiti | Seviye belirleme sınavı |
+| Memory (AI memory) | Anı | Yapay zekânın kullanıcı hakkında hatırladıkları |
+| Transcript | Deşifre | |
+| Phrasebook | Konuşma Kılavuzu | |
+| Register (dilbilim) | Üslup | Resmî / gündelik dil |
+| Self-hosted | Kendi kendine barındırılan | |
+| Hosted service | Barındırılan hizmet | |
+| Vocabulary | Kelime Bilgisi | Menü/bölüm adı; "kelime dağarcığı" metin içinde |
