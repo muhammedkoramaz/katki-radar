@@ -48,5 +48,15 @@
   "HarnessRouter/harnessrouter#474": "2026-10-19",
   "TrenTorch/TrenTorch#500": "2026-10-19",
   "klsdf/GreenResourcesManager:tr": "2026-10-19",
-  "existence-master/Sentient#107": "2026-10-19"
+  "existence-master/Sentient#107": "2026-10-19",
+  "walinejs/waline:tr": "2026-10-26",
+  "amd/gaia#3169": "2026-10-26",
+  "amd/gaia#3196": "2026-10-26",
+  "homarr-labs/homarr#7369": "2026-10-26",
+  "data-privacy-stack/presidio#2256": "2026-10-26",
+  "processing/p5.js#8771": "2026-10-26",
+  "yamada-ui/yamada-ui#6991": "2026-10-26",
+  "yamada-ui/yamada-ui#6992": "2026-10-26",
+  "timothepoznanski/poznote:tr": "2026-10-26",
+  "diceframe/diceframe:tr": "2026-10-26"
 }
